@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const router = Router();
-
-// const authMiddleware = require("../middlewares/auth.middleware");
+const authentication = require("../middlewares/authentication");
+const isAdmin = require("../middlewares/isAdmin");
 const { getAll, getById, createSurat, updateSurat, deleteSurat, TolakSurat, konfirmasiSurat, getAllUncheckedSurat } = require("../controllers/surat.controller");
 
 router.get("/surat", getAll);

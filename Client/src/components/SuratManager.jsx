@@ -5,12 +5,12 @@ import "../style/list.css";
 import axios from "axios";
 import { format } from "date-fns";
 
-function SuratMasuk() {
+function SuratManager() {
   const [showEdit, setShowEdit] = useState(false);
   const [isAdding, setIsAdding] = useState(true);
   const [platforms, setPlatforms] = useState([]);
   const [newRecord, setNewRecord] = useState({
-    idMasuk: "",
+    idKeluar: "",
     Lampiran: "",
     namaFile: "",
     Nomor: "",
@@ -21,6 +21,7 @@ function SuratMasuk() {
   const formatDate = (date) => {
     return format(new Date(date), "dd-MM-yyyy"); // Format tanggal ke "dd-MM-yyyy"
   };
+
   const handleClose = () => {
     setShowEdit(false);
   };
@@ -31,22 +32,22 @@ function SuratMasuk() {
     setShowEdit(true);
 
     if (!isAdding && id) {
-      const arsipMasukToEdit = platforms.find((platform) => platform.idMasuk === id);
-      if (arsipMasukToEdit) {
+      const arsipKeluarToEdit = platforms.find((platform) => platform.idKeluar === id);
+      if (arsipKeluarToEdit) {
         setNewRecord({
           ...newRecord,
-          idMasuk: arsipMasukToEdit.idMasuk,
-          Lampiran: arsipMasukToEdit.Lampiran,
-          namaFile: arsipMasukToEdit.namaFile,
-          Nomor: arsipMasukToEdit.Nomor,
-          tglUpload: arsipMasukToEdit.tglUpload,
+          idKeluar: arsipKeluarToEdit.idKeluar,
+          Lampiran: arsipKeluarToEdit.Lampiran,
+          namaFile: arsipKeluarToEdit.namaFile,
+          Nomor: arsipKeluarToEdit.Nomor,
+          tglUpload: arsipKeluarToEdit.tglUpload,
         });
       }
     } else {
-      const newIdMasuk = `SRTM${(platforms.length + 1).toString().padStart(3, "0")}`;
+      const newIdKeluar = `SRTK${(platforms.length + 1).toString().padStart(3, "0")}`;
       setNewRecord((prevRecord) => ({
         ...prevRecord,
-        idMasuk: newIdMasuk,
+        idKeluar: newIdKeluar,
         Lampiran: "",
         namaFile: "",
         Nomor: "",
@@ -58,7 +59,7 @@ function SuratMasuk() {
 
   const getPlatforms = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/arsip_masuk");
+      const response = await axios.get("http://localhost:5000/arsip_keluar");
       setPlatforms(response.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -69,7 +70,7 @@ function SuratMasuk() {
     getPlatforms();
     if (editRecordId !== null) {
       axios
-        .get(`http://localhost:5000/arsip_masuk/${editRecordId}`)
+        .get(`http://localhost:5000/arsip_keluar/${editRecordId}`)
         .then((response) => {
           setNewRecord(response.data);
         })
@@ -95,7 +96,7 @@ function SuratMasuk() {
     }
 
     axios
-      .post("http://localhost:5000/arsip_masuk", formData)
+      .post("http://localhost:5000/arsip_keluar", formData)
       .then((response) => {
         console.log("Data added:", response.data);
         getPlatforms();
@@ -114,15 +115,15 @@ function SuratMasuk() {
       formData.append(key, newRecord[key]);
     }
 
-    axios.patch(`http://localhost:5000/arsip_masuk/${editRecordId}`, formData).then((response) => {
+    axios.patch(`http://localhost:5000/arsip_keluar/${editRecordId}`, formData).then((response) => {
       console.log("Data updated:", response.data);
       getPlatforms();
       handleClose();
     });
   };
 
-  const handleDeletePlatform = (idMasuk) => {
-    axios.delete(`http://localhost:5000/arsip_masuk/${idMasuk}`).then((response) => {
+  const handleDeletePlatform = (idKeluar) => {
+    axios.delete(`http://localhost:5000/arsip_keluar/${idKeluar}`).then((response) => {
       console.log("Data deleted:", response.data);
       getPlatforms();
     });
@@ -133,7 +134,7 @@ function SuratMasuk() {
     setSelectedFile(image);
   };
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   return (
     <div className="pt-1">
@@ -142,7 +143,7 @@ function SuratMasuk() {
           <div className="row row-cols-2">
             <div className="col mt-2">
               <h2>
-                <b style={{ fontFamily: "Dancing Script, cursive" }}>Data Surat Masuk</b>
+                <b style={{ fontFamily: "Dancing Script, cursive" }}>Data Surat</b>
               </h2>
             </div>
             <div className="col mt-2 mb-4 d-flex justify-content-end">
@@ -176,7 +177,7 @@ function SuratMasuk() {
                     platforms.map((platform, index) => (
                       <tr key={platform.id}>
                         <td>{index + 1}</td>
-                        <td>{platform.idMasuk}</td>
+                        <td>{platform.idKeluar}</td>
                         <td>{platform.Lampiran}</td>
                         <td>{platform.namaFile}</td>
                         <td>{platform.Nomor}</td>
@@ -188,10 +189,10 @@ function SuratMasuk() {
                           </a>
                         </td>
                         <td>
-                          <button type="button" className="btn btn-primary btn-sm me-2" onClick={() => handleShow(false, platform.idMasuk)}>
+                          <button type="button" className="btn btn-primary btn-sm me-2" onClick={() => handleShow(false, platform.idKeluar)}>
                             Edit
                           </button>
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeletePlatform(platform.idMasuk)}>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeletePlatform(platform.idKeluar)}>
                             Hapus
                           </button>
                         </td>
@@ -212,7 +213,7 @@ function SuratMasuk() {
               <Modal.Body>
                 <form>
                   <div className="form-group">
-                    <input type="text" className="form-control" placeholder="Id Masuk" name="idMasuk" value={newRecord.idMasuk || ""} onChange={handleInputChange} readOnly />
+                    <input type="text" className="form-control" placeholder="Id Keluar" name="idKeluar" value={newRecord.idKeluar || ""} onChange={handleInputChange} readOnly />
                   </div>
                   <div className="form-group mt-3">
                     <input type="text" className="form-control" placeholder="Lampiran" name="Lampiran" value={newRecord.Lampiran || ""} onChange={handleInputChange} />
@@ -250,4 +251,4 @@ function SuratMasuk() {
   );
 }
 
-export default SuratMasuk;
+export default SuratManager;

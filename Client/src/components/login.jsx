@@ -13,17 +13,26 @@ const Login = () => {
   const Auth = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/login", {
+      const response = await axios.post("http://localhost:5000/login", {
         email: email,
         password: password,
       });
-      navigate("/dashboard");
+  
+      const isAdmin = response.data.isAdmin;
+  
+    
+      if (isAdmin) {
+        navigate("/staff");
+      } else {
+        navigate("/manager");
+      }
     } catch (error) {
       if (error.response) {
         setMsg(error.response.data.msg);
       }
     }
   };
+  
 
   return (
     <section class="vh-100">

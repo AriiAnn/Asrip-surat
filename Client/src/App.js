@@ -1,11 +1,10 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./components/login";
-import Dashboard from "./components/Dashboard";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import SuratKeluar from "./components/SuratKeluar";
-import SuratMasuk from "./components/SuratMasuk";
+import SuratStaff from "./components/SuratStaff";
+import SuratManager from "./components/SuratManager";
 
 function App() {
   return (
@@ -20,31 +19,21 @@ function App() {
           }
         />
         <Route
-          path="/dashboard"
+          path="/staff"
           element={
             <>
               <Navbar />
-              <Dashboard />
+              <SuratStaff />
               <Footer />
             </>
           }
         />
         <Route
-          path="/arsip-keluar"
+          path="/manager"
           element={
             <>
               <Navbar />
-              <SuratKeluar />
-              <Footer />
-            </>
-          }
-        />
-        <Route
-          path="/arsip-Masuk"
-          element={
-            <>
-              <Navbar />
-              <SuratMasuk />
+              <SuratManager />
               <Footer />
             </>
           }
