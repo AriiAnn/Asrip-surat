@@ -257,7 +257,17 @@ function SuratStaff() {
                   <input type="text" className="form-control" placeholder="Perihal" name="perihal" value={newRecord.perihal || ""} onChange={handleInputChange} />
                 </div>
                 <div className="form-group mt-3">
-                  <input type="text" className="form-control" placeholder="Jenis" name="jenis" value={newRecord.jenis || ""} onChange={handleInputChange} />
+                  <label className="mb-1">Jenis</label>
+                  <select
+                    className="form-control"
+                    name="jenis"
+                    value={newRecord.jenis || ""}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Pilih Jenis Surat</option>
+                    <option value="Surat Masuk">Surat Masuk</option>
+                    <option value="Surat Keluar">Surat Keluar</option>
+                  </select>
                 </div>
                 <div className="form-group mt-3">
                   <label className="mb-1">Tanggal Upload</label>
