@@ -151,6 +151,28 @@ const getAllUncheckedSurat = async (req, res, next) => {
         res.status(500).json({ msg: "Internal Server Error" });
     }
 };
+const getUncheckedSuratById = async (req, res, next) => {
+    const { id } = req.params;
+
+    try {
+        // Temukan surat berdasarkan ID dengan status "UNCHECK"
+        const foundSurat = await surat.findOne({
+            where: {
+                id: id,
+                status: "UNCHECK"
+            }
+        });
+
+        if (!foundSurat) {
+            return res.status(404).json({ msg: "Unchecked Surat not found" });
+        }
+
+        res.status(200).json({ foundSurat });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ msg: "Internal Server Error" });
+    }
+};
 
 
 const konfirmasiSurat = async (req, res, next) => {
@@ -229,4 +251,5 @@ module.exports = {
     konfirmasiSurat,
     TolakSurat,
     getAllUncheckedSurat,
+    getUncheckedSuratById,
 };

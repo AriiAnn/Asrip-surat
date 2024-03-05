@@ -146,12 +146,13 @@ function SuratStaff() {
 
   const loadImage = (e) => {
     const file = e.target.files[0];
-    if (file && file.type.includes('image')) {
+    if (file) {
       setSelectedFile(file);
     } else {
-      alert('Pilih file gambar yang valid.');
+      alert('Pilih file yang valid.');
     }
   };
+
 
 
   return (
@@ -214,12 +215,16 @@ function SuratStaff() {
                             </a>
                           </td>
                           <td>
-                            <button type="button" className="btn btn-primary btn-sm me-2" onClick={() => handleShow(false, platform.id)}>
-                              Edit
-                            </button>
-                            <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeletePlatform(platform.id)}>
-                              Hapus
-                            </button>
+                            {platform.status === "UNCHECK" && (
+                              <>
+                                <button type="button" className="btn btn-primary btn-sm me-2" onClick={() => handleShow(false, platform.id)}>
+                                  Edit
+                                </button>
+                                <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeletePlatform(platform.id)}>
+                                  Hapus
+                                </button>
+                              </>
+                            )}
                           </td>
                         </tr>
                       ))

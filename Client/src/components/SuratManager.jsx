@@ -1,140 +1,89 @@
 import React, { useState, useEffect } from "react";
 import { Button, Modal } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "../style/list.css";
 import axios from "axios";
 import { format } from "date-fns";
 
 function SuratManager() {
-  const [showEdit, setShowEdit] = useState(false);
-  const [isAdding, setIsAdding] = useState(true);
+  const [showDetail, setShowDetail] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [platforms, setPlatforms] = useState([]);
-  const [newRecord, setNewRecord] = useState({
-    idKeluar: "",
-    Lampiran: "",
-    namaFile: "",
-    Nomor: "",
-    tglUpload: "",
-  });
-  const [editRecordId, setEditRecordId] = useState(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [newRecord, setNewRecord] = useState("");
+  const [checkedItemId, setCheckedItemId] = useState(null);
+
+
   const formatDate = (date) => {
-    return format(new Date(date), "dd-MM-yyyy"); // Format tanggal ke "dd-MM-yyyy"
-  };
-
-  const handleClose = () => {
-    setShowEdit(false);
-  };
-
-  const handleShow = (isAdding, id = null) => {
-    setIsAdding(isAdding);
-    setEditRecordId(id);
-    setShowEdit(true);
-
-    if (!isAdding && id) {
-      const arsipKeluarToEdit = platforms.find((platform) => platform.idKeluar === id);
-      if (arsipKeluarToEdit) {
-        setNewRecord({
-          ...newRecord,
-          idKeluar: arsipKeluarToEdit.idKeluar,
-          Lampiran: arsipKeluarToEdit.Lampiran,
-          namaFile: arsipKeluarToEdit.namaFile,
-          Nomor: arsipKeluarToEdit.Nomor,
-          tglUpload: arsipKeluarToEdit.tglUpload,
-        });
+    try {
+      if (!date || isNaN(new Date(date))) {
+        // Check if the date is null or not a valid date
+        return "Invalid Date";
       }
-    } else {
-      const newIdKeluar = `SRTK${(platforms.length + 1).toString().padStart(3, "0")}`;
-      setNewRecord((prevRecord) => ({
-        ...prevRecord,
-        idKeluar: newIdKeluar,
-        Lampiran: "",
-        namaFile: "",
-        Nomor: "",
-        tglUpload: "",
-        file: selectedFile,
-      }));
+
+      return format(new Date(date), "dd-MM-yyyy"); // Format tanggal ke "dd-MM-yyyy"
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid Date";
     }
   };
+
+
+  const handleClose = () => {
+    setShowDetail(false);
+  };
+
+  const handleShow = async (id) => {
+    setCheckedItemId(id);
+    setShowDetail(true);
+
+    try {
+      const response = await axios.get(`http://localhost:5000/check/${id}`);
+      const receivedRecord = response.data.foundSurat;
+
+      console.log("Response from server:", response.data); // Tambahkan log respons dari server
+
+      if (receivedRecord) {
+        setNewRecord(receivedRecord);
+        console.log("Received record:", receivedRecord); // Periksa data yang diterima dari server
+      } else {
+        console.error("Received record is undefined or null");
+      }
+    } catch (error) {
+      console.error("Error fetching record:", error);
+    }
+  };
+
 
   const getPlatforms = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/arsip_keluar");
-      setPlatforms(response.data);
+      setLoading(true);
+      const response = await axios.get("http://localhost:5000/check");
+      setPlatforms(response.data && response.data.uncheckedSurat ? response.data.uncheckedSurat : []);
     } catch (error) {
       console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    getPlatforms();
-    if (editRecordId !== null) {
-      axios
-        .get(`http://localhost:5000/arsip_keluar/${editRecordId}`)
-        .then((response) => {
-          setNewRecord(response.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching record:", error);
-        });
-    }
-  }, [editRecordId]);
-
-  const handleInputChange = (e) => {
-    setNewRecord({
-      ...newRecord,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleAddPlatform = () => {
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    for (let key in newRecord) {
-      formData.append(key, newRecord[key]);
-    }
-
-    axios
-      .post("http://localhost:5000/arsip_keluar", formData)
-      .then((response) => {
-        console.log("Data added:", response.data);
-        getPlatforms();
-        handleClose();
-      })
-      .catch((error) => {
-        console.error("Error adding data:", error);
-      });
-  };
-
-  const handleEditPlatform = () => {
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    for (let key in newRecord) {
-      formData.append(key, newRecord[key]);
-    }
-
-    axios.patch(`http://localhost:5000/arsip_keluar/${editRecordId}`, formData).then((response) => {
-      console.log("Data updated:", response.data);
+  const handleAccept = (id) => {
+    axios.put(`http://localhost:5000/konfirmasi/${id}`).then((response) => {
+      console.log("Data accepted:", response.data);
       getPlatforms();
       handleClose();
     });
   };
 
-  const handleDeletePlatform = (idKeluar) => {
-    axios.delete(`http://localhost:5000/arsip_keluar/${idKeluar}`).then((response) => {
-      console.log("Data deleted:", response.data);
+  const handleReject = (id) => {
+    axios.put(`http://localhost:5000/tolak/${id}`).then((response) => {
+      console.log("Data rejected:", response.data);
       getPlatforms();
+      handleClose();
     });
   };
 
-  const loadImage = (e) => {
-    const image = e.target.files[0];
-    setSelectedFile(image);
-  };
-
-  useEffect(() => { }, []);
+  useEffect(() => {
+    getPlatforms();
+  }, []);
 
   return (
     <div className="pt-1">
@@ -143,108 +92,99 @@ function SuratManager() {
           <div className="row row-cols-2">
             <div className="col mt-2">
               <h2>
-                <b style={{ fontFamily: "Dancing Script, cursive" }}>Data Surat</b>
+                <b style={{ fontFamily: "Dancing Script, cursive" }}>Data Surat Manager</b>
               </h2>
-            </div>
-            <div className="col mt-2 mb-4 d-flex justify-content-end">
-              <Button variant="success" onClick={() => handleShow(true)}>
-                Tambah Surat
-              </Button>
             </div>
           </div>
           <div className="row">
             <div className="table-responsive text-center">
-              <table className="table colors table-bordered">
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Id Surat</th>
-                    <th>Lampiran</th>
-                    <th>Nama File</th>
-                    <th>Nomor surat</th>
-                    <th>Tipe File</th>
-                    <th>tgl Upload</th>
-                    <th>File</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {platforms.length === 0 ? (
+              {loading ? (
+                <p>Loading...</p>
+              ) : (
+                <table className="table colors table-bordered">
+                  <thead>
                     <tr>
-                      <td colSpan="10">Tidak terdapat data Platform yang tersimpan</td>
+                      <th>No</th>
+                      <th>Id Surat</th>
+                      <th>Tujuan</th>
+                      <th>No. Surat</th>
+                      <th>Perihal</th>
+                      <th>Tipe File</th>
+                      <th>tanggal</th>
+                      <th>jenis</th>
+                      <th>status</th>
+                      <th>File</th>
+                      <th>Action</th>
                     </tr>
-                  ) : (
-                    platforms.map((platform, index) => (
-                      <tr key={platform.id}>
-                        <td>{index + 1}</td>
-                        <td>{platform.idKeluar}</td>
-                        <td>{platform.Lampiran}</td>
-                        <td>{platform.namaFile}</td>
-                        <td>{platform.Nomor}</td>
-                        <td>{platform.tipeFile}</td>
-                        <td>{formatDate(platform.tglUpload)}</td>
-                        <td>
-                          <a href={platform.url} target="_blank" rel="noreferrer">
-                            Download
-                          </a>
-                        </td>
-                        <td>
-                          <button type="button" className="btn btn-primary btn-sm me-2" onClick={() => handleShow(false, platform.idKeluar)}>
-                            Edit
-                          </button>
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDeletePlatform(platform.idKeluar)}>
-                            Hapus
-                          </button>
-                        </td>
+                  </thead>
+                  <tbody>
+                    {platforms.length === 0 ? (
+                      <tr>
+                        <td colSpan="10">Tidak terdapat data Platform yang tersimpan</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      platforms.map((platform, index) => (
+                        <tr key={platform.id}>
+                          <td>{index + 1}</td>
+                          <td>{platform.id}</td>
+                          <td>{platform.tujuan}</td>
+                          <td>{platform.no_surat}</td>
+                          <td>{platform.perihal}</td>
+                          <td>{platform.tipeFile}</td>
+                          <td>{formatDate(platform.tanggal)}</td>
+                          <td>{platform.jenis}</td>
+                          <td>{platform.status}</td>
+                          <td>
+                            <a href={platform.url} target="_blank" rel="noreferrer">
+                              Download
+                            </a>
+                          </td>
+                          <td>
+                            <button type="button" className="btn btn-primary btn-sm me-2" onClick={() => handleShow(platform.id)}>
+                              CHECK
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* <!--- Model Box ---> */}
-          <div className="model_box">
-            <Modal show={showEdit} onHide={handleClose} backdrop="static" keyboard={false}>
-              <Modal.Header closeButton>
-                <Modal.Title>{isAdding ? "Add Surat" : "Edit Surat"}</Modal.Title>
-              </Modal.Header>
-              <Modal.Body>
-                <form>
-                  <div className="form-group">
-                    <input type="text" className="form-control" placeholder="Id Keluar" name="idKeluar" value={newRecord.idKeluar || ""} onChange={handleInputChange} readOnly />
-                  </div>
-                  <div className="form-group mt-3">
-                    <input type="text" className="form-control" placeholder="Lampiran" name="Lampiran" value={newRecord.Lampiran || ""} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group mt-3">
-                    <input type="text" className="form-control" placeholder="Nama File" name="namaFile" value={newRecord.namaFile || ""} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group mt-3">
-                    <input type="text" className="form-control" placeholder="Nomor" name="Nomor" value={newRecord.Nomor || ""} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group mt-3">
-                    <label className="mb-1">Tanggal Upload</label>
-                    <input type="date" className="form-control" name="tglUpload" value={newRecord.tglUpload || ""} onChange={handleInputChange} />
-                  </div>
-                  <div className="form-group mt-3">
-                    <input type="file" className="form-control" onChange={loadImage} />
-                  </div>
-                  <button type="submit" className="btn btn-success mt-4" onClick={isAdding ? handleAddPlatform : handleEditPlatform}>
-                    {isAdding ? "Add Arsip" : "Save Changes"}
-                  </button>
-                </form>
-              </Modal.Body>
-
-              <Modal.Footer>
-                <Button variant="secondary" onClick={handleClose}>
-                  Close
-                </Button>
-              </Modal.Footer>
-            </Modal>
-            {/* Model Box Finsihs */}
-          </div>
+        <div className="model_box">
+          <Modal show={showDetail} onHide={handleClose} backdrop="static" keyboard={false}>
+            <Modal.Header closeButton>
+              <Modal.Title>Detail Surat</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p>ID: {checkedItemId}</p>
+              {newRecord ? (
+                <>
+                  <p>Tujuan: {newRecord.tujuan}</p>
+                  <p>No. Surat: {newRecord.no_surat}</p>
+                  <p>Perihal: {newRecord.perihal}</p>
+                  <p>Jenis: {newRecord.jenis}</p>
+                  <p>Tanggal: {formatDate(newRecord.tanggal)}</p>
+                  <a href={newRecord.url} target="_blank" rel="noreferrer">
+                    Lihat Surat
+                  </a>
+                </>
+              ) : (
+                <p>Data tidak tersedia atau sedang dimuat...</p>
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="success" onClick={() => handleAccept(checkedItemId)}>
+                Accept
+              </Button>
+              <Button variant="danger" onClick={() => handleReject(checkedItemId)}>
+                Reject
+              </Button>
+            </Modal.Footer>
+          </Modal>
         </div>
       </div>
     </div>
